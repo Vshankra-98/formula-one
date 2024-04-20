@@ -1,0 +1,26 @@
+{
+	"name": "PL_extracting_result_fils_from_apit",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach - iterating race file year and round",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.master_array",
+						"type": "Expression"
+					},
+					"batchCount": 25
+				}
+			}
+		],
+		"parameters": {
+			"master_array": {
+				"type": "array"
+			}
+		},
+		"annotations": []
+	}
+}

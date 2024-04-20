@@ -1,9 +1,223 @@
 {
 	"name": "PL_child_for_race",
 	"properties": {
+		"activities": [
+			{
+				"name": "Until1",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "varibale_for total varible",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@greater(variables('offset'),variables('total'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "incremental_offset",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "extract filies from api",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "incremental_offset",
+								"value": {
+									"value": "@add(int(pipeline().parameters.limit), variables('offset') )",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "final_offset",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "incremental_offset",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "offset",
+								"value": {
+									"value": "@variables('incremental_offset')",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "extract filies from api",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET"
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "MergeFiles",
+										"metadata": [
+											{
+												"name": "page",
+												"value": {
+													"value": "@variables('incremental_offset')",
+													"type": "Expression"
+												}
+											}
+										]
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "dataset_for_source",
+									"type": "DatasetReference",
+									"parameters": {
+										"dataset_name": {
+											"value": "@pipeline().parameters.dataset_name_source",
+											"type": "Expression"
+										},
+										"limit": {
+											"value": "@concat('?limit=',pipeline().parameters.limit)",
+											"type": "Expression"
+										},
+										"offset": {
+											"value": "@concat('&offset=',variables('offset'))",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "dataset_for_sink",
+									"type": "DatasetReference",
+									"parameters": {
+										"layer_name": {
+											"value": "@pipeline().parameters.sink_layer_name",
+											"type": "Expression"
+										},
+										"dataset_name": {
+											"value": "@pipeline().parameters.dataset_name_sink",
+											"type": "Expression"
+										},
+										"file_name": {
+											"value": "@concat(pipeline().parameters.sink_file_name,'_',variables('incremental_offset'))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					],
+					"timeout": "0.12:00:00"
+				}
+			},
+			{
+				"name": "Web1_api_for_total_variable",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"url": {
+						"value": "@concat('http://ergast.com/api/f1/',pipeline().parameters.dataset_name_source,'.json')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "varibale_for total varible",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Web1_api_for_total_variable",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "total",
+					"value": {
+						"value": "@int(activity('Web1_api_for_total_variable').output.MRData.total)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
 		"parameters": {
-			"year": {
+			"dataset_name_source": {
 				"type": "String"
+			},
+			"limit": {
+				"type": "string",
+				"defaultValue": "30"
+			},
+			"sink_layer_name": {
+				"type": "string"
+			},
+			"dataset_name_sink": {
+				"type": "string"
+			},
+			"sink_file_name": {
+				"type": "string"
 			}
 		},
 		"variables": {
@@ -18,7 +232,7 @@
 			"result": {
 				"type": "Boolean"
 			},
-			"limit": {
+			"incremental_offset": {
 				"type": "Integer"
 			}
 		},

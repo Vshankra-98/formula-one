@@ -3,86 +3,14 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "copy_data_Season_from api",
-				"type": "Copy",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"source": {
-						"type": "JsonSource",
-						"storeSettings": {
-							"type": "HttpReadSettings",
-							"requestMethod": "GET"
-						},
-						"formatSettings": {
-							"type": "JsonReadSettings"
-						}
-					},
-					"sink": {
-						"type": "JsonSink",
-						"storeSettings": {
-							"type": "AzureBlobFSWriteSettings",
-							"copyBehavior": "PreserveHierarchy"
-						},
-						"formatSettings": {
-							"type": "JsonWriteSettings"
-						}
-					},
-					"enableStaging": false
-				},
-				"inputs": [
-					{
-						"referenceName": "dataset_for_source",
-						"type": "DatasetReference",
-						"parameters": {
-							"dataset_name": {
-								"value": "@pipeline().parameters.dataset_name_source",
-								"type": "Expression"
-							},
-							"limit": {
-								"value": "@concat('?limit=',pipeline().parameters.limit)",
-								"type": "Expression"
-							}
-						}
-					}
-				],
-				"outputs": [
-					{
-						"referenceName": "dataset_for_sink",
-						"type": "DatasetReference",
-						"parameters": {
-							"layer_name": {
-								"value": "@pipeline().parameters.sink_layer",
-								"type": "Expression"
-							},
-							"dataset_name": {
-								"value": "@pipeline().parameters.sink_dataset_name",
-								"type": "Expression"
-							},
-							"file_name": {
-								"value": "@pipeline().parameters.sink_file_name",
-								"type": "Expression"
-							}
-						}
-					}
-				]
-			},
-			{
 				"name": "lookup activity for season",
 				"description": "this activity to lookup every year of the in the seasen",
 				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "copy_data_Season_from api",
+						"activity": "extract_fies_of_season",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -130,6 +58,8 @@
 				"name": "foreach iterationg years",
 				"description": "this activity to iterate years to extract race files",
 				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "lookup activity for season",
@@ -141,77 +71,14 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('lookup activity for season').output.value[0].MRData.SeasonTable.Seasons",
+						"value": "@activity('lookup activity for season').output.value",
 						"type": "Expression"
 					},
 					"isSequential": false,
 					"batchCount": 25,
 					"activities": [
 						{
-							"name": "copy race files",
-							"description": "this activity extrace race fies from api",
-							"type": "Copy",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"source": {
-									"type": "JsonSource",
-									"storeSettings": {
-										"type": "HttpReadSettings",
-										"requestMethod": "GET"
-									},
-									"formatSettings": {
-										"type": "JsonReadSettings"
-									}
-								},
-								"enableStaging": false
-							},
-							"inputs": [
-								{
-									"referenceName": "dataset_for_source",
-									"type": "DatasetReference",
-									"parameters": {
-										"dataset_name": {
-											"value": "@item().season",
-											"type": "Expression"
-										}
-									}
-								}
-							]
-						},
-						{
-							"name": "Web1",
-							"type": "WebActivity",
-							"state": "Inactive",
-							"onInactiveMarkAs": "Succeeded",
-							"dependsOn": [],
-							"policy": {
-								"timeout": "0.12:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"method": "GET",
-								"url": {
-									"value": "@concat('http://ergast.com/api/f1/',item().season, '.json')",
-									"type": "Expression"
-								}
-							}
-						},
-						{
-							"name": "Execute Pipeline1",
+							"name": "Execute Pipeline for iteration every file in dataset",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
 							"policy": {
@@ -220,16 +87,146 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "PL_child_for_race",
+									"referenceName": "PL_extracting_race_files",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": false,
+								"waitOnCompletion": true,
 								"parameters": {
-									"year": {
-										"value": "@item().season",
+									"item_form_master": {
+										"value": "@item().MRData.SeasonTable.Seasons",
+										"type": "Expression"
+									},
+									"limit_for_source": {
+										"value": "@pipeline().parameters.limit",
 										"type": "Expression"
 									}
 								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "extract_fies_of_season",
+				"type": "ExecutePipeline",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_child_for_race",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"dataset_name_source": {
+							"value": "@pipeline().parameters.dataset_name_source",
+							"type": "Expression"
+						},
+						"limit": {
+							"value": "@pipeline().parameters.limit",
+							"type": "Expression"
+						},
+						"sink_layer_name": {
+							"value": "@pipeline().parameters.sink_layer",
+							"type": "Expression"
+						},
+						"dataset_name_sink": {
+							"value": "@pipeline().parameters.sink_dataset_name",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Lookup_for_year_round_in_race",
+				"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "foreach iterationg years",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dataset_for_lookup_activity",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.lookup_layer_name",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.lookup_dataset_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "foreach iterate lookup of race",
+				"description": "iterates race dataset fiels ",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup_for_year_round_in_race",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Execute Pipeline for iteration every file in dataset').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Execute Pipeline - race file data",
+							"description": "this activity invoke another foreach to exatrac year and round value",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_result_fils_from_apit",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
 							}
 						}
 					]
@@ -272,7 +269,7 @@
 			"result": {
 				"type": "Boolean"
 			},
-			"limit": {
+			"incremental_offset": {
 				"type": "Integer"
 			}
 		},

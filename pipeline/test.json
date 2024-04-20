@@ -3,26 +3,67 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Set variable1",
-				"type": "SetVariable",
+				"name": "Copy data1",
+				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
 					"secureOutput": false,
 					"secureInput": false
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"variableName": "result",
-					"value": {
-						"value": "@greater(variables('limit') ,variables('offset'))",
-						"type": "Expression"
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "dataset_for_source",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_name": "seasons",
+							"limit": "?limit=100",
+							"offset": "&offset=0"
+						}
 					}
-				}
+				],
+				"outputs": [
+					{
+						"referenceName": "dataset_for_sink",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": "bronze",
+							"dataset_name": "seasons",
+							"file_name": "seasons"
+						}
+					}
+				]
 			}
 		],
 		"variables": {
 			"limit": {
-				"type": "Integer"
+				"type": "Integer",
+				"defaultValue": 20
 			},
 			"offset": {
 				"type": "Integer",
@@ -30,6 +71,9 @@
 			},
 			"result": {
 				"type": "Boolean"
+			},
+			"incremental_offset": {
+				"type": "Integer"
 			}
 		},
 		"annotations": []

@@ -1,0 +1,64 @@
+{
+	"name": "PL_extracting_race_files",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.item_form_master",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_child_for_race",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"dataset_name_source": {
+										"value": "@item().season",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit_for_source",
+										"type": "Expression"
+									},
+									"sink_layer_name": "bronze",
+									"dataset_name_sink": "race",
+									"sink_file_name": {
+										"value": "@item().season",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"item_form_master": {
+				"type": "array"
+			},
+			"limit_for_source": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}

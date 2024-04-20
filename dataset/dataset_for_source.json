@@ -11,6 +11,9 @@
 			},
 			"limit": {
 				"type": "String"
+			},
+			"offset": {
+				"type": "string"
 			}
 		},
 		"annotations": [],
@@ -19,7 +22,7 @@
 			"location": {
 				"type": "HttpServerLocation",
 				"relativeUrl": {
-					"value": "@concat(dataset().dataset_name,'.json',dataset().limit)",
+					"value": "@concat(dataset().dataset_name,'.json',dataset().limit, dataset().offset)",
 					"type": "Expression"
 				}
 			}
