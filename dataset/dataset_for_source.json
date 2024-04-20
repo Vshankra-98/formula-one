@@ -1,0 +1,29 @@
+{
+	"name": "dataset_for_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "HttpServer1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"dataset_name": {
+				"type": "String"
+			},
+			"limit": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@concat(dataset().dataset_name,'.json',dataset().limit)",
+					"type": "Expression"
+				}
+			}
+		},
+		"schema": {}
+	}
+}

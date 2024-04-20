@@ -1,0 +1,246 @@
+{
+	"name": "PL_extraction_season_race",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_data_Season_from api",
+				"type": "Copy",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "dataset_for_source",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_name": {
+								"value": "@pipeline().parameters.dataset_name_source",
+								"type": "Expression"
+							},
+							"limit": {
+								"value": "@concat('?limit=',pipeline().parameters.limit)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "dataset_for_sink",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.sink_layer",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.sink_dataset_name",
+								"type": "Expression"
+							},
+							"file_name": {
+								"value": "@pipeline().parameters.sink_file_name",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "lookup activity for season",
+				"description": "this activity to lookup every year of the in the seasen",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "copy_data_Season_from api",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dataset_for_lookup_activity",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.lookup_layer_name",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.lookup_dataset_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "foreach iterationg years",
+				"description": "this activity to iterate years to extract race files",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lookup activity for season",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lookup activity for season').output.value[0].MRData.SeasonTable.Seasons",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "copy race files",
+							"description": "this activity extrace race fies from api",
+							"type": "Copy",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET"
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "dataset_for_source",
+									"type": "DatasetReference",
+									"parameters": {
+										"dataset_name": {
+											"value": "@item().season",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Web1",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"url": {
+									"value": "@concat('http://ergast.com/api/f1/',item().season, '.json')",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"dataset_name_source": {
+				"type": "String"
+			},
+			"sink_layer": {
+				"type": "String",
+				"defaultValue": "bronze"
+			},
+			"sink_file_name": {
+				"type": "String"
+			},
+			"sink_dataset_name": {
+				"type": "String"
+			},
+			"limit": {
+				"type": "String"
+			},
+			"lookup_dataset_name": {
+				"type": "String"
+			},
+			"lookup_layer_name": {
+				"type": "String",
+				"defaultValue": "bronze"
+			}
+		},
+		"variables": {
+			"set": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}

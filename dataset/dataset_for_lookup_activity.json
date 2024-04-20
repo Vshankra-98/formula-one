@@ -1,0 +1,77 @@
+{
+	"name": "dataset_for_lookup_activity",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"layer_name": {
+				"type": "String",
+				"defaultValue": "bronze"
+			},
+			"dataset_name": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat(dataset().layer_name,'/', dataset().dataset_name)",
+					"type": "Expression"
+				},
+				"fileSystem": "formula-one"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"MRData": {
+					"type": "object",
+					"properties": {
+						"xmlns": {
+							"type": "string"
+						},
+						"series": {
+							"type": "string"
+						},
+						"url": {
+							"type": "string"
+						},
+						"limit": {
+							"type": "string"
+						},
+						"offset": {
+							"type": "string"
+						},
+						"total": {
+							"type": "string"
+						},
+						"SeasonTable": {
+							"type": "object",
+							"properties": {
+								"Seasons": {
+									"type": "array",
+									"items": {
+										"type": "object",
+										"properties": {
+											"season": {
+												"type": "string"
+											},
+											"url": {
+												"type": "string"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

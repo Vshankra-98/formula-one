@@ -1,0 +1,37 @@
+{
+	"name": "dataset_for_sink",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "AzureDataLakeStorage1",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"layer_name": {
+				"type": "String"
+			},
+			"dataset_name": {
+				"type": "String"
+			},
+			"file_name": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().file_name,'.json')",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(dataset().layer_name,'/',dataset().dataset_name)",
+					"type": "Expression"
+				},
+				"fileSystem": "formula-one"
+			}
+		},
+		"schema": {}
+	}
+}
