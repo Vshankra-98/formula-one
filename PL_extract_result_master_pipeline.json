@@ -1,0 +1,123 @@
+{
+	"name": "PL_extract_result_master_pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "lookup_for_year_and_raoun",
+				"description": "this actvity scan race files year wise and between them round to extract result data",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_lookup",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_name": {
+								"value": "@pipeline().parameters.dataset_for_lookup",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lookup_for_year_and_raoun",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lookup_for_year_and_raoun').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_child_extrace_result",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"collection": {
+										"value": "@item().MRData.RaceTable.Races",
+										"type": "Expression"
+									},
+									"dataset_nae": {
+										"value": "@pipeline().parameters.dataset_name",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"dataset_for_lookup": {
+				"type": "String",
+				"defaultValue": "race"
+			},
+			"dataset_name": {
+				"type": "string"
+			},
+			"limit": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"item": {
+				"type": "Array"
+			},
+			"array": {
+				"type": "Array"
+			},
+			"check": {
+				"type": "Array"
+			}
+		},
+		"annotations": []
+	}
+}

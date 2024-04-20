@@ -1,0 +1,106 @@
+{
+	"name": "PL_child_extrace_result",
+	"properties": {
+		"activities": [
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.collection",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Copy data1",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET"
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "MergeFiles"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_api_race",
+									"type": "DatasetReference",
+									"parameters": {
+										"file_name": {
+											"value": "@concat(item()['season'],'/',item()['round'],'/',pipeline().parameters.dataset_nae,'.json')",
+											"type": "Expression"
+										},
+										"limit": {
+											"value": "@concat('?limit=',pipeline().parameters.limit)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_sink",
+									"type": "DatasetReference",
+									"parameters": {
+										"dataset_sink_nmae": {
+											"value": "@pipeline().parameters.dataset_nae",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"collection": {
+				"type": "array"
+			},
+			"dataset_nae": {
+				"type": "string"
+			},
+			"limit": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"item": {
+				"type": "String"
+			},
+			"check": {
+				"type": "Array"
+			}
+		},
+		"annotations": []
+	}
+}

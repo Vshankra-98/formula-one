@@ -1,0 +1,242 @@
+{
+	"name": "pl_extract_race_season",
+	"properties": {
+		"activities": [
+			{
+				"name": "Copy data1",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings",
+							"copyBehavior": "PreserveHierarchy"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
+						}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_source_api",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_name": {
+								"value": "@concat(pipeline().parameters.base_url,'.json')",
+								"type": "Expression"
+							},
+							"limit": {
+								"value": "@concat('?limit=',pipeline().parameters.limit_api_file)",
+								"type": "Expression"
+							},
+							"offset": {
+								"value": "@concat('&',pipeline().parameters.offset_api_file)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_sink",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_sink_nmae": {
+								"value": "@pipeline().parameters.base_url",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			},
+			{
+				"name": "Lookup1",
+				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Copy data1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "DS_lookup",
+						"type": "DatasetReference",
+						"parameters": {
+							"dataset_name": {
+								"value": "@pipeline().parameters.dataset_name_for_lookup",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "Lookup1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup1').output.value[0]['MRData']['SeasonTable']['Seasons']",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Copy data2",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"storeSettings": {
+										"type": "HttpReadSettings",
+										"requestMethod": "GET"
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings",
+										"copyBehavior": "PreserveHierarchy"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "DS_api_race",
+									"type": "DatasetReference",
+									"parameters": {
+										"file_name": {
+											"value": "@concat(item().season,'.json')",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "DS_sink",
+									"type": "DatasetReference",
+									"parameters": {
+										"dataset_sink_nmae": {
+											"value": "@pipeline().parameters.dataset_sink",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"base_url": {
+				"type": "String",
+				"defaultValue": "seasons"
+			},
+			"dataset_name_for_lookup": {
+				"type": "String",
+				"defaultValue": "seasons"
+			},
+			"dataset_sink": {
+				"type": "string"
+			},
+			"limit_api_file": {
+				"type": "string"
+			},
+			"offset_api_file": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"checck": {
+				"type": "Array"
+			},
+			"strin": {
+				"type": "String"
+			},
+			"item": {
+				"type": "Array"
+			},
+			"iteem": {
+				"type": "Array"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-04-11T15:13:17Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
