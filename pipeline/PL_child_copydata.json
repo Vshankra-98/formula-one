@@ -1,5 +1,5 @@
 {
-	"name": "PL_child_for_race",
+	"name": "PL_child_copydata",
 	"properties": {
 		"activities": [
 			{
@@ -234,6 +234,12 @@
 			},
 			"incremental_offset": {
 				"type": "Integer"
+			},
+			"season": {
+				"type": "String"
+			},
+			"array": {
+				"type": "Array"
 			}
 		},
 		"annotations": []

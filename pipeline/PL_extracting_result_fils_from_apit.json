@@ -12,13 +12,59 @@
 						"value": "@pipeline().parameters.master_array",
 						"type": "Expression"
 					},
-					"batchCount": 25
+					"isSequential": false,
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "EX_PL_child_for_race",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_child_copydata",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"dataset_name_source": {
+										"value": "@concat(item().season,'/', item().round, '/results')\n\n",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit",
+										"type": "Expression"
+									},
+									"sink_layer_name": "bronze",
+									"dataset_name_sink": "results",
+									"sink_file_name": {
+										"value": "@concat(item().season,'_',item().round)",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
 				}
 			}
 		],
 		"parameters": {
 			"master_array": {
 				"type": "array"
+			},
+			"limit": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"season": {
+				"type": "String"
+			},
+			"array": {
+				"type": "Array"
 			}
 		},
 		"annotations": []

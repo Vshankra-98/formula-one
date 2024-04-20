@@ -80,6 +80,8 @@
 						{
 							"name": "Execute Pipeline for iteration every file in dataset",
 							"type": "ExecutePipeline",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"policy": {
 								"secureInput": false
@@ -118,7 +120,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "PL_child_for_race",
+						"referenceName": "PL_child_copydata",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true,
@@ -207,9 +209,10 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Execute Pipeline for iteration every file in dataset').output.value",
+						"value": "@activity('Lookup_for_year_round_in_race').output.value",
 						"type": "Expression"
 					},
+					"isSequential": false,
 					"batchCount": 25,
 					"activities": [
 						{
@@ -226,7 +229,17 @@
 									"referenceName": "PL_extracting_result_fils_from_apit",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": true
+								"waitOnCompletion": false,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTable.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit",
+										"type": "Expression"
+									}
+								}
 							}
 						}
 					]
@@ -266,11 +279,11 @@
 				"type": "Integer",
 				"defaultValue": 0
 			},
-			"result": {
-				"type": "Boolean"
-			},
 			"incremental_offset": {
 				"type": "Integer"
+			},
+			"season": {
+				"type": "String"
 			}
 		},
 		"annotations": []

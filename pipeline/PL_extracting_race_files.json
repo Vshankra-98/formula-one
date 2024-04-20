@@ -25,7 +25,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "PL_child_for_race",
+									"referenceName": "PL_child_copydata",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": false,
@@ -57,6 +57,11 @@
 			},
 			"limit_for_source": {
 				"type": "string"
+			}
+		},
+		"variables": {
+			"array": {
+				"type": "Array"
 			}
 		},
 		"annotations": []
