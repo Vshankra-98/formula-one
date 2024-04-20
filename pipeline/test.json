@@ -1,0 +1,37 @@
+{
+	"name": "test",
+	"properties": {
+		"activities": [
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "result",
+					"value": {
+						"value": "@greater(variables('limit') ,variables('offset'))",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"limit": {
+				"type": "Integer"
+			},
+			"offset": {
+				"type": "Integer",
+				"defaultValue": 0
+			},
+			"result": {
+				"type": "Boolean"
+			}
+		},
+		"annotations": []
+	}
+}

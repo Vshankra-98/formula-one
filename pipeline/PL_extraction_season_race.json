@@ -144,6 +144,7 @@
 						"value": "@activity('lookup activity for season').output.value[0].MRData.SeasonTable.Seasons",
 						"type": "Expression"
 					},
+					"isSequential": false,
 					"batchCount": 25,
 					"activities": [
 						{
@@ -190,6 +191,8 @@
 						{
 							"name": "Web1",
 							"type": "WebActivity",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
@@ -204,6 +207,28 @@
 								"url": {
 									"value": "@concat('http://ergast.com/api/f1/',item().season, '.json')",
 									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Execute Pipeline1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_child_for_race",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"year": {
+										"value": "@item().season",
+										"type": "Expression"
+									}
 								}
 							}
 						}
@@ -239,6 +264,16 @@
 		"variables": {
 			"set": {
 				"type": "String"
+			},
+			"offset": {
+				"type": "Integer",
+				"defaultValue": 0
+			},
+			"result": {
+				"type": "Boolean"
+			},
+			"limit": {
+				"type": "Integer"
 			}
 		},
 		"annotations": []

@@ -1,0 +1,27 @@
+{
+	"name": "PL_child_for_race",
+	"properties": {
+		"parameters": {
+			"year": {
+				"type": "String"
+			}
+		},
+		"variables": {
+			"offset": {
+				"type": "Integer",
+				"defaultValue": 0
+			},
+			"total": {
+				"type": "Integer",
+				"defaultValue": 20
+			},
+			"result": {
+				"type": "Boolean"
+			},
+			"limit": {
+				"type": "Integer"
+			}
+		},
+		"annotations": []
+	}
+}
