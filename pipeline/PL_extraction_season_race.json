@@ -227,6 +227,8 @@
 							"name": "Execute Pipeline - race file data",
 							"description": "this activity invoke another foreach to exatrac year and round value",
 							"type": "ExecutePipeline",
+							"state": "Inactive",
+							"onInactiveMarkAs": "Succeeded",
 							"dependsOn": [],
 							"policy": {
 								"secureInput": false
@@ -368,6 +370,111 @@
 						}
 					},
 					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Lookup - race - year round - for lam-times",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "foreach iterate lookup of race_copy1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dataset_for_lookup_activity",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.lookup_layer_name",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.lookup_dataset_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "ForEach - for laptimes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Lookup - race - year round - for lam-times",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Lookup - race - year round - for lam-times').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Execute Pipeline - race for  laptimes",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_year_and_round",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTable.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.dataset_name_source",
+										"type": "Expression"
+									},
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.sink_layer",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
 				}
 			}
 		],
