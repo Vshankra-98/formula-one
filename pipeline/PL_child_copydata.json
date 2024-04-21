@@ -25,7 +25,7 @@
 							"type": "SetVariable",
 							"dependsOn": [
 								{
-									"activity": "extract filies from api",
+									"activity": "variable for limit in integer",
 									"dependencyConditions": [
 										"Succeeded"
 									]
@@ -156,7 +156,14 @@
 						{
 							"name": "variable for limit in integer",
 							"type": "SetVariable",
-							"dependsOn": [],
+							"dependsOn": [
+								{
+									"activity": "extract filies from api",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
 							"policy": {
 								"secureOutput": false,
 								"secureInput": false
