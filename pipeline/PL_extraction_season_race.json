@@ -87,7 +87,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "PL_extracting_race_files",
+									"referenceName": "PL_extracting_year",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": true,
@@ -225,7 +225,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "PL_extracting_result_fils_from_apit",
+									"referenceName": "PL_extracting_year_and_round",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": false,
@@ -276,7 +276,7 @@
 							"userProperties": [],
 							"typeProperties": {
 								"pipeline": {
-									"referenceName": "PL_extracting_result_fils_from_apit",
+									"referenceName": "PL_extracting_year_and_round",
 									"type": "PipelineReference"
 								},
 								"waitOnCompletion": false,
