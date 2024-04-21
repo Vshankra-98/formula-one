@@ -334,6 +334,12 @@
 			},
 			"season": {
 				"type": "String"
+			},
+			"limit_in_int": {
+				"type": "Integer"
+			},
+			"limit_in_string": {
+				"type": "String"
 			}
 		},
 		"annotations": []
