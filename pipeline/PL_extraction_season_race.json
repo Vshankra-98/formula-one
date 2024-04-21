@@ -279,7 +279,7 @@
 									"referenceName": "PL_extracting_year_and_round",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": false,
+								"waitOnCompletion": true,
 								"parameters": {
 									"master_array": {
 										"value": "@item().MRData.RaceTable.Races",
