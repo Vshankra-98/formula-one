@@ -28,7 +28,7 @@
 									"referenceName": "PL_child_copydata",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": false,
+								"waitOnCompletion": true,
 								"parameters": {
 									"dataset_name_source": {
 										"value": "@concat(item().season,'/', item().round, '/pitstops')\n\n",
