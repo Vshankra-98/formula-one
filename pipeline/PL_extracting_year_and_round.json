@@ -31,7 +31,7 @@
 								"waitOnCompletion": true,
 								"parameters": {
 									"dataset_name_source": {
-										"value": "@concat(item().season,'/', item().round, '/pitstops')\n\n",
+										"value": "@concat(item().season,'/', item().round, '/results')\n\n",
 										"type": "Expression"
 									},
 									"limit": {
@@ -39,7 +39,7 @@
 										"type": "Expression"
 									},
 									"sink_layer_name": "bronze",
-									"dataset_name_sink": "pitstops",
+									"dataset_name_sink": "results",
 									"sink_file_name": {
 										"value": "@concat(item().season,'_',item().round)",
 										"type": "Expression"

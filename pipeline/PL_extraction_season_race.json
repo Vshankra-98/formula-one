@@ -6,6 +6,8 @@
 				"name": "lookup activity for season",
 				"description": "this activity to lookup every year of the in the seasen",
 				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "extract_fies_of_season",
@@ -152,7 +154,14 @@
 				"type": "Lookup",
 				"state": "Inactive",
 				"onInactiveMarkAs": "Succeeded",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "foreach iterationg years",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -199,7 +208,7 @@
 				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "lookup activity for season",
+						"activity": "Lookup_for_year_round_in_race",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -245,12 +254,14 @@
 				}
 			},
 			{
-				"name": "foreach iterate lookup of pitspots",
+				"name": "foreach iterate lookup of race_copy1",
 				"description": "iterates race dataset fiels ",
 				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "lookup activity for season",
+						"activity": "Lookup_for_year_round_in_race_copy1",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -279,7 +290,7 @@
 									"referenceName": "PL_extracting_year_and_round",
 									"type": "PipelineReference"
 								},
-								"waitOnCompletion": true,
+								"waitOnCompletion": false,
 								"parameters": {
 									"master_array": {
 										"value": "@item().MRData.RaceTable.Races",
@@ -293,6 +304,58 @@
 							}
 						}
 					]
+				}
+			},
+			{
+				"name": "Lookup_for_year_round_in_race_copy1",
+				"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
+				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [
+					{
+						"activity": "foreach iterate lookup of race",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dataset_for_lookup_activity",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.lookup_layer_name",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.lookup_dataset_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
