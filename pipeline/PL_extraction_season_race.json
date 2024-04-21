@@ -375,6 +375,8 @@
 			{
 				"name": "Lookup - race - year round - for lam-times",
 				"type": "Lookup",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "foreach iterate lookup of race_copy1",
@@ -397,6 +399,11 @@
 						"storeSettings": {
 							"type": "AzureBlobFSReadSettings",
 							"recursive": true,
+							"modifiedDatetimeStart": "2024-04-20T18:02:11.000Z",
+							"modifiedDatetimeEnd": {
+								"value": "@utcNow()",
+								"type": "Expression"
+							},
 							"wildcardFileName": "*.json",
 							"enablePartitionDiscovery": false
 						},
@@ -424,6 +431,8 @@
 			{
 				"name": "ForEach - for laptimes",
 				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "Lookup - race - year round - for lam-times",
