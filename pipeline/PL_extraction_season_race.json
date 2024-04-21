@@ -149,7 +149,7 @@
 				}
 			},
 			{
-				"name": "Lookup_for_year_round_in_race",
+				"name": "Lookup_for_year_round_in_race_for_reults",
 				"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
 				"type": "Lookup",
 				"state": "Inactive",
@@ -208,7 +208,7 @@
 				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "Lookup_for_year_round_in_race",
+						"activity": "Lookup_for_year_round_in_race_for_reults",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -217,7 +217,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('lookup activity for season').output.value",
+						"value": "@activity('Lookup_for_year_round_in_race_for_reults').output.value",
 						"type": "Expression"
 					},
 					"isSequential": false,
@@ -246,6 +246,14 @@
 									"limit": {
 										"value": "@pipeline().parameters.limit",
 										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.dataset_name_source",
+										"type": "Expression"
+									},
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.sink_layer",
+										"type": "Expression"
 									}
 								}
 							}
@@ -257,11 +265,9 @@
 				"name": "foreach iterate lookup of race_copy1",
 				"description": "iterates race dataset fiels ",
 				"type": "ForEach",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "Lookup_for_year_round_in_race_copy1",
+						"activity": "Lookup_for_year_round_in_race_for_pitaspots",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -270,7 +276,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('lookup activity for season').output.value",
+						"value": "@activity('Lookup_for_year_round_in_race_for_pitaspots').output.value",
 						"type": "Expression"
 					},
 					"isSequential": false,
@@ -299,6 +305,14 @@
 									"limit": {
 										"value": "@pipeline().parameters.limit",
 										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.dataset_name_source",
+										"type": "Expression"
+									},
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.sink_layer",
+										"type": "Expression"
 									}
 								}
 							}
@@ -307,11 +321,9 @@
 				}
 			},
 			{
-				"name": "Lookup_for_year_round_in_race_copy1",
+				"name": "Lookup_for_year_round_in_race_for_pitaspots",
 				"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
 				"type": "Lookup",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "foreach iterate lookup of race",

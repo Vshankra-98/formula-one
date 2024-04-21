@@ -38,8 +38,14 @@
 										"value": "@pipeline().parameters.limit_for_source",
 										"type": "Expression"
 									},
-									"sink_layer_name": "bronze",
-									"dataset_name_sink": "race",
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.sink_layer_name",
+										"type": "Expression"
+									},
+									"dataset_name_sink": {
+										"value": "@pipeline().parameters.dataset_name",
+										"type": "Expression"
+									},
 									"sink_file_name": {
 										"value": "@item().season",
 										"type": "Expression"
@@ -56,6 +62,12 @@
 				"type": "array"
 			},
 			"limit_for_source": {
+				"type": "string"
+			},
+			"dataset_name": {
+				"type": "string"
+			},
+			"sink_layer_name": {
 				"type": "string"
 			}
 		},
