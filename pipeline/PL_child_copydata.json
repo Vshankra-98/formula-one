@@ -39,7 +39,7 @@
 							"typeProperties": {
 								"variableName": "incremental_offset",
 								"value": {
-									"value": "@add(int(pipeline().parameters.limit), variables('offset') )",
+									"value": "@add(int(pipeline().parameters.limit),variables('offset'))",
 									"type": "Expression"
 								}
 							}

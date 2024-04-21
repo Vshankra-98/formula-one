@@ -6,8 +6,6 @@
 				"name": "lookup activity for season",
 				"description": "this activity to lookup every year of the in the seasen",
 				"type": "Lookup",
-				"state": "Inactive",
-				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "extract_fies_of_season",
@@ -140,6 +138,10 @@
 						"dataset_name_sink": {
 							"value": "@pipeline().parameters.sink_dataset_name",
 							"type": "Expression"
+						},
+						"sink_file_name": {
+							"value": "@pipeline().parameters.sink_file_name",
+							"type": "Expression"
 						}
 					}
 				}
@@ -148,14 +150,9 @@
 				"name": "Lookup_for_year_round_in_race",
 				"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
 				"type": "Lookup",
-				"dependsOn": [
-					{
-						"activity": "foreach iterationg years",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
 				"policy": {
 					"timeout": "0.12:00:00",
 					"retry": 0,
@@ -198,9 +195,11 @@
 				"name": "foreach iterate lookup of race",
 				"description": "iterates race dataset fiels ",
 				"type": "ForEach",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
-						"activity": "Lookup_for_year_round_in_race",
+						"activity": "lookup activity for season",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -209,7 +208,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"items": {
-						"value": "@activity('Lookup_for_year_round_in_race').output.value",
+						"value": "@activity('lookup activity for season').output.value",
 						"type": "Expression"
 					},
 					"isSequential": false,
@@ -217,6 +216,57 @@
 					"activities": [
 						{
 							"name": "Execute Pipeline - race file data",
+							"description": "this activity invoke another foreach to exatrac year and round value",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_result_fils_from_apit",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": false,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTable.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "foreach iterate lookup of pitspots",
+				"description": "iterates race dataset fiels ",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "lookup activity for season",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('lookup activity for season').output.value",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "Execute Pipeline - race file data_copy1",
 							"description": "this activity invoke another foreach to exatrac year and round value",
 							"type": "ExecutePipeline",
 							"dependsOn": [],
