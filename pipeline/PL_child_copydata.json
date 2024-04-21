@@ -39,7 +39,7 @@
 							"typeProperties": {
 								"variableName": "incremental_offset",
 								"value": {
-									"value": "@add(int(pipeline().parameters.limit),variables('offset'))",
+									"value": "@add(int(variables('limit_in_string')),variables('offset'))",
 									"type": "Expression"
 								}
 							}
@@ -152,6 +152,23 @@
 									}
 								}
 							]
+						},
+						{
+							"name": "variable for limit in integer",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "limit_in_string",
+								"value": {
+									"value": "@pipeline().parameters.limit",
+									"type": "Expression"
+								}
+							}
 						}
 					],
 					"timeout": "0.12:00:00"
@@ -240,6 +257,9 @@
 			},
 			"array": {
 				"type": "Array"
+			},
+			"limit_in_string": {
+				"type": "String"
 			}
 		},
 		"annotations": []
