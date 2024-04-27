@@ -1,0 +1,280 @@
+{
+	"name": "PL_copyData_paralelly",
+	"properties": {
+		"activities": [
+			{
+				"name": "act_lookup_races",
+				"description": "this activity lookkup the race data",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"wildcardFileName": "*.json",
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "dataset_for_lookup_activity",
+						"type": "DatasetReference",
+						"parameters": {
+							"layer_name": {
+								"value": "@pipeline().parameters.lookup_layer_source",
+								"type": "Expression"
+							},
+							"dataset_name": {
+								"value": "@pipeline().parameters.lookup_DS_source",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "act_result",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "act_lookup_races",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('act_lookup_races').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "act_execute PL dataset",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_year_and_round",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTables.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit_by_user",
+										"type": "Expression"
+									},
+									"dataset_name": "results",
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.SINK_Layer",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "act_pitspots",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "act_lookup_races",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('act_lookup_races').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "act_execute PL dataset_copy1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_year_and_round",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTables.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit_by_user",
+										"type": "Expression"
+									},
+									"dataset_name": "pitstops",
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.SINK_Layer",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "act_Laptimes",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "act_lookup_races",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('act_lookup_races').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "act_execute PL dataset_copy1_copy1",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_year_and_round",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTables.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit_by_user",
+										"type": "Expression"
+									},
+									"dataset_name": "laps",
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.SINK_Layer",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "act_qualifying",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "act_lookup_races",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('act_lookup_races').output.value",
+						"type": "Expression"
+					},
+					"batchCount": 25,
+					"activities": [
+						{
+							"name": "act_execute PL dataset_copy1_copy2",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "PL_extracting_year_and_round",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"master_array": {
+										"value": "@item().MRData.RaceTables.Races",
+										"type": "Expression"
+									},
+									"limit": {
+										"value": "@pipeline().parameters.limit_by_user",
+										"type": "Expression"
+									},
+									"dataset_name": "qualifying",
+									"sink_layer_name": {
+										"value": "@pipeline().parameters.SINK_Layer",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"lookup_DS_source": {
+				"type": "String"
+			},
+			"lookup_layer_source": {
+				"type": "String"
+			},
+			"DS_source_API": {
+				"type": "string"
+			},
+			"SINK_Layer": {
+				"type": "string"
+			},
+			"Limit_by_user": {
+				"type": "string"
+			}
+		},
+		"annotations": []
+	}
+}

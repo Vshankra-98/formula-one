@@ -142,7 +142,7 @@
 											"type": "Expression"
 										},
 										"dataset_name": {
-											"value": "@pipeline().parameters.dataset_name_sink",
+											"value": "@concat(pipeline().parameters.dataset_name_sink, '/', utcnow('yyyy_MM_dd'))",
 											"type": "Expression"
 										},
 										"file_name": {
@@ -253,17 +253,8 @@
 				"type": "Integer",
 				"defaultValue": 20
 			},
-			"result": {
-				"type": "Boolean"
-			},
 			"incremental_offset": {
 				"type": "Integer"
-			},
-			"season": {
-				"type": "String"
-			},
-			"array": {
-				"type": "Array"
 			},
 			"limit_in_string": {
 				"type": "String"
