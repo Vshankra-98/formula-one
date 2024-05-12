@@ -1,0 +1,24 @@
+{
+	"name": "TRIGGER_BLOB",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_oracle_to_colud",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "BlobEventsTrigger",
+		"typeProperties": {
+			"blobPathBeginsWith": "/from-oracle/blobs/",
+			"ignoreEmptyBlobs": true,
+			"scope": "/subscriptions/d73e1434-32a3-472e-a05b-60330d1c8fe0/resourceGroups/rg_venkat/providers/Microsoft.Storage/storageAccounts/stsnowflakeblob11",
+			"events": [
+				"Microsoft.Storage.BlobCreated"
+			]
+		}
+	}
+}
