@@ -6,7 +6,7 @@
 		"pipelines": [
 			{
 				"pipelineReference": {
-					"referenceName": "pl_oracle_to_colud",
+					"referenceName": "pl_azure-trigger",
 					"type": "PipelineReference"
 				}
 			}
