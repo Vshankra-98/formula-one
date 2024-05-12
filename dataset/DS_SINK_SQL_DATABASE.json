@@ -1,0 +1,16 @@
+{
+	"name": "DS_SINK_SQL_DATABASE",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_azure_sql_database",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "HR",
+			"table": "EMPLOYEES"
+		}
+	}
+}
