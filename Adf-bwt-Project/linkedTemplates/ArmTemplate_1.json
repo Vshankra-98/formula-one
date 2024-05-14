@@ -1,0 +1,1386 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "Adf-bwt-Project"
+		},
+		"trigger-blob-storage_properties_typeProperties_scope": {
+			"type": "string",
+			"defaultValue": "/subscriptions/d73e1434-32a3-472e-a05b-60330d1c8fe0/resourceGroups/rg_venkat/providers/Microsoft.Storage/storageAccounts/stsnowflakeblob11"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/test')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "dataset_for_source",
+								"type": "DatasetReference",
+								"parameters": {
+									"dataset_name": "seasons",
+									"limit": "?limit=100",
+									"offset": "&offset=0"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "dataset_for_sink",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": "bronze",
+									"dataset_name": "seasons",
+									"file_name": "seasons"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"limit": {
+						"type": "Integer",
+						"defaultValue": 20
+					},
+					"offset": {
+						"type": "Integer",
+						"defaultValue": 0
+					},
+					"result": {
+						"type": "Boolean"
+					},
+					"incremental_offset": {
+						"type": "Integer"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_oracle')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_oracle",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "OracleTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "HR",
+					"table": "EMPLOYEES"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_extracting_year')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.item_form_master",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "Execute Pipeline1",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_child_copydata",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": false,
+										"parameters": {
+											"dataset_name_source": {
+												"value": "@item().season",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit_for_source",
+												"type": "Expression"
+											},
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.sink_layer_name",
+												"type": "Expression"
+											},
+											"dataset_name_sink": {
+												"value": "@pipeline().parameters.dataset_name",
+												"type": "Expression"
+											},
+											"sink_file_name": {
+												"value": "@item().season",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"item_form_master": {
+						"type": "array"
+					},
+					"limit_for_source": {
+						"type": "string"
+					},
+					"dataset_name": {
+						"type": "string"
+					},
+					"sink_layer_name": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"array": {
+						"type": "Array"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_extracting_year_and_round')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "ForEach - iterating race file year and round",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.master_array",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "EX_PL_child_for_race",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_child_copydata",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"dataset_name_source": {
+												"value": "@concat(item().season,'/', item().round, '/', pipeline().parameters.dataset_name)",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit",
+												"type": "Expression"
+											},
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.sink_layer_name",
+												"type": "Expression"
+											},
+											"dataset_name_sink": {
+												"value": "@pipeline().parameters.dataset_name",
+												"type": "Expression"
+											},
+											"sink_file_name": {
+												"value": "@concat(pipeline().parameters.dataset_name,'_',item().season,'_',item().round)",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"master_array": {
+						"type": "array"
+					},
+					"limit": {
+						"type": "string"
+					},
+					"dataset_name": {
+						"type": "string"
+					},
+					"sink_layer_name": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"season": {
+						"type": "String"
+					},
+					"array": {
+						"type": "Array"
+					},
+					"limit_in_int": {
+						"type": "Integer"
+					},
+					"limit_in_string": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ORACLE_AZURE_blob')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "act_copy",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "OracleSource",
+								"additionalColumns": [
+									{
+										"name": "ingest_date",
+										"value": {
+											"value": "@utcNow()",
+											"type": "Expression"
+										}
+									}
+								],
+								"partitionOption": "None",
+								"convertDecimalToInteger": false,
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "EMPLOYEE_ID",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "EMPLOYEE_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "FIRST_NAME",
+											"type": "String"
+										},
+										"sink": {
+											"name": "FIRST_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "LAST_NAME",
+											"type": "String"
+										},
+										"sink": {
+											"name": "LAST_NAME",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "EMAIL",
+											"type": "String"
+										},
+										"sink": {
+											"name": "EMAIL",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "PHONE_NUMBER",
+											"type": "String"
+										},
+										"sink": {
+											"name": "PHONE_NUMBER",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "HIRE_DATE",
+											"type": "DateTime"
+										},
+										"sink": {
+											"name": "HIRE_DATE",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "JOB_ID",
+											"type": "String"
+										},
+										"sink": {
+											"name": "JOB_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "SALARY",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "SALARY",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "COMMISSION_PCT",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "COMMISSION_PCT",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "MANAGER_ID",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "MANAGER_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "DEPARTMENT_ID",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "DEPARTMENT_ID",
+											"type": "String",
+											"physicalType": "String"
+										}
+									},
+									{
+										"source": {
+											"name": "ingest_date",
+											"type": "String"
+										},
+										"sink": {
+											"name": "ingest_date",
+											"type": "String",
+											"physicalType": "String"
+										}
+									}
+								],
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_oracle",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_blob_csv_from_oracle",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_oracle')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger-blob-storage')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_azure-trigger",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "BlobEventsTrigger",
+				"typeProperties": {
+					"blobPathBeginsWith": "/from-oracle/blobs/",
+					"ignoreEmptyBlobs": true,
+					"scope": "[parameters('trigger-blob-storage_properties_typeProperties_scope')]",
+					"events": [
+						"Microsoft.Storage.BlobCreated"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_copyData_paralelly')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "act_lookup_races",
+						"description": "this activity lookkup the race data",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "dataset_for_lookup_activity",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": {
+										"value": "@pipeline().parameters.lookup_layer_source",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.lookup_DS_source",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "act_result",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "act_lookup_races",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('act_lookup_races').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "act_execute PL dataset",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTables.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit_by_user",
+												"type": "Expression"
+											},
+											"dataset_name": "results",
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.SINK_Layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "act_pitspots",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "act_lookup_races",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('act_lookup_races').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "act_execute PL dataset_copy1",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTables.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit_by_user",
+												"type": "Expression"
+											},
+											"dataset_name": "pitstops",
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.SINK_Layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "act_Laptimes",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "act_lookup_races",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('act_lookup_races').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "act_execute PL dataset_copy1_copy1",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTables.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit_by_user",
+												"type": "Expression"
+											},
+											"dataset_name": "laps",
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.SINK_Layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "act_qualifying",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "act_lookup_races",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('act_lookup_races').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "act_execute PL dataset_copy1_copy2",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTables.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit_by_user",
+												"type": "Expression"
+											},
+											"dataset_name": "qualifying",
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.SINK_Layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"lookup_DS_source": {
+						"type": "String"
+					},
+					"lookup_layer_source": {
+						"type": "String"
+					},
+					"DS_source_API": {
+						"type": "string"
+					},
+					"SINK_Layer": {
+						"type": "string"
+					},
+					"Limit_by_user": {
+						"type": "string"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_extracting_year_and_round')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_extraction_season_race')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "lookup activity for season",
+						"description": "this activity to lookup every year of the in the seasen",
+						"type": "Lookup",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "extract_fies_of_season",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "dataset_for_lookup_activity",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": {
+										"value": "@pipeline().parameters.lookup_layer_name",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.lookup_dataset_name",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "foreach iterationg years",
+						"description": "this activity to iterate years to extract race files",
+						"type": "ForEach",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "lookup activity for season",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('lookup activity for season').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "Execute Pipeline for iteration every file in dataset",
+									"type": "ExecutePipeline",
+									"state": "Inactive",
+									"onInactiveMarkAs": "Succeeded",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"item_form_master": {
+												"value": "@item().MRData.SeasonTable.Seasons",
+												"type": "Expression"
+											},
+											"limit_for_source": {
+												"value": "@pipeline().parameters.limit",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "extract_fies_of_season",
+						"type": "ExecutePipeline",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "PL_child_copydata",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"dataset_name_source": {
+									"value": "@pipeline().parameters.dataset_name_source",
+									"type": "Expression"
+								},
+								"limit": {
+									"value": "@pipeline().parameters.limit",
+									"type": "Expression"
+								},
+								"sink_layer_name": {
+									"value": "@pipeline().parameters.sink_layer",
+									"type": "Expression"
+								},
+								"dataset_name_sink": {
+									"value": "@pipeline().parameters.sink_dataset_name",
+									"type": "Expression"
+								},
+								"sink_file_name": {
+									"value": "@pipeline().parameters.sink_file_name",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Lookup_for_year_round_in_race_for_reults",
+						"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
+						"type": "Lookup",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "foreach iterationg years",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "dataset_for_lookup_activity",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": {
+										"value": "@pipeline().parameters.lookup_layer_name",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.lookup_dataset_name",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "foreach iterate lookup of race",
+						"description": "iterates race dataset fiels ",
+						"type": "ForEach",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "Lookup_for_year_round_in_race_for_reults",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_for_year_round_in_race_for_reults').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "Execute Pipeline - race file data",
+									"description": "this activity invoke another foreach to exatrac year and round value",
+									"type": "ExecutePipeline",
+									"state": "Inactive",
+									"onInactiveMarkAs": "Succeeded",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": false,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTable.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit",
+												"type": "Expression"
+											},
+											"dataset_name": {
+												"value": "@pipeline().parameters.dataset_name_source",
+												"type": "Expression"
+											},
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.sink_layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "foreach iterate lookup of race_copy1",
+						"description": "iterates race dataset fiels ",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Lookup_for_year_round_in_race_for_pitaspots",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup_for_year_round_in_race_for_pitaspots').output.value",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "Execute Pipeline - race file data_copy1",
+									"description": "this activity invoke another foreach to exatrac year and round value",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": false,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTable.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit",
+												"type": "Expression"
+											},
+											"dataset_name": {
+												"value": "@pipeline().parameters.dataset_name_source",
+												"type": "Expression"
+											},
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.sink_layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Lookup_for_year_round_in_race_for_pitaspots",
+						"description": "this activity lookup race dataset and gives the year and round value to extact file for result",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "foreach iterate lookup of race",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "dataset_for_lookup_activity",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": {
+										"value": "@pipeline().parameters.lookup_layer_name",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.lookup_dataset_name",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Lookup - race - year round - for lam-times",
+						"type": "Lookup",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "foreach iterate lookup of race_copy1",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"modifiedDatetimeStart": "2024-04-20T18:02:11.000Z",
+									"modifiedDatetimeEnd": {
+										"value": "@utcNow()",
+										"type": "Expression"
+									},
+									"wildcardFileName": "*.json",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "dataset_for_lookup_activity",
+								"type": "DatasetReference",
+								"parameters": {
+									"layer_name": {
+										"value": "@pipeline().parameters.lookup_layer_name",
+										"type": "Expression"
+									},
+									"dataset_name": {
+										"value": "@pipeline().parameters.lookup_dataset_name",
+										"type": "Expression"
+									}
+								}
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "ForEach - for laptimes",
+						"type": "ForEach",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [
+							{
+								"activity": "Lookup - race - year round - for lam-times",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Lookup - race - year round - for lam-times').output.value",
+								"type": "Expression"
+							},
+							"batchCount": 25,
+							"activities": [
+								{
+									"name": "Execute Pipeline - race for  laptimes",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "PL_extracting_year_and_round",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": false,
+										"parameters": {
+											"master_array": {
+												"value": "@item().MRData.RaceTable.Races",
+												"type": "Expression"
+											},
+											"limit": {
+												"value": "@pipeline().parameters.limit",
+												"type": "Expression"
+											},
+											"dataset_name": {
+												"value": "@pipeline().parameters.dataset_name_source",
+												"type": "Expression"
+											},
+											"sink_layer_name": {
+												"value": "@pipeline().parameters.sink_layer",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"dataset_name_source": {
+						"type": "String"
+					},
+					"sink_layer": {
+						"type": "String",
+						"defaultValue": "bronze"
+					},
+					"sink_file_name": {
+						"type": "String"
+					},
+					"sink_dataset_name": {
+						"type": "String"
+					},
+					"limit": {
+						"type": "String"
+					},
+					"lookup_dataset_name": {
+						"type": "String"
+					},
+					"lookup_layer_name": {
+						"type": "String",
+						"defaultValue": "bronze"
+					}
+				},
+				"variables": {
+					"set": {
+						"type": "String"
+					},
+					"offset": {
+						"type": "Integer",
+						"defaultValue": 0
+					},
+					"incremental_offset": {
+						"type": "Integer"
+					},
+					"season": {
+						"type": "String"
+					},
+					"limit_in_int": {
+						"type": "Integer"
+					},
+					"limit_in_string": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PL_extracting_year')]",
+				"[concat(variables('factoryId'), '/pipelines/PL_extracting_year_and_round')]"
+			]
+		}
+	]
+}
