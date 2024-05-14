@@ -1,0 +1,48 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "Adf-bwt-Project"
+		},
+		"AzureDataLakeStorage1_accountKey": {
+			"value": ""
+		},
+		"LS_ADlsGen2_accountKey": {
+			"value": ""
+		},
+		"LS_BLOB_connectionString": {
+			"value": ""
+		},
+		"LS_PostgresSql_connectionString": {
+			"value": ""
+		},
+		"LS_azure_sql_database_connectionString": {
+			"value": ""
+		},
+		"LS_oracle_connectionString": {
+			"value": ""
+		},
+		"LS_postgres_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage1_properties_typeProperties_url": {
+			"value": "https://stproject123.dfs.core.windows.net/"
+		},
+		"HttpServer1_properties_typeProperties_url": {
+			"value": "http://ergast.com/api/f1/"
+		},
+		"LS_ADlsGen2_properties_typeProperties_url": {
+			"value": "https://stproject123.dfs.core.windows.net/"
+		},
+		"trigger-blob-storage_properties_typeProperties_scope": {
+			"value": "/subscriptions/d73e1434-32a3-472e-a05b-60330d1c8fe0/resourceGroups/rg_venkat/providers/Microsoft.Storage/storageAccounts/stsnowflakeblob11"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}
