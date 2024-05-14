@@ -1,10 +1,5 @@
 {
 	"name": "Adf-bwt-Project",
-	"properties": {
-		"globalConfigurations": {
-			"PipelineBillingEnabled": "true"
-		}
-	},
 	"location": "centralindia",
 	"identity": {
 		"type": "SystemAssigned",
